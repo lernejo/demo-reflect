@@ -1,7 +1,6 @@
 package org.example;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
@@ -11,7 +10,9 @@ public class DataGenerator {
     private final Random random = new Random();
 
     public <T> T generateRandom(Class<T> clazz) {
-        if (clazz.equals(String.class)) {
+        if (clazz.isAnnotationPresent(Nullable.class)) {
+            return null;
+        } else if (clazz.equals(String.class)) {
             return (T) UUID.randomUUID().toString();
         } else if (clazz.equals(Integer.class)) {
             return (T) Integer.valueOf(random.nextInt());
@@ -23,8 +24,8 @@ public class DataGenerator {
     }
 
     private <T> T instantiate(Constructor<T> constructor) {
-        Object[] parameters = Arrays.stream(constructor.getParameterTypes())
-                .map(t -> generateRandom(t))
+        Object[] parameters = Arrays.stream(constructor.getParameters())
+                .map(p -> p.isAnnotationPresent(Nullable.class) ? null : generateRandom(p.getType()))
                 .toArray();
         try {
             return constructor.newInstance(parameters);
